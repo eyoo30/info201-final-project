@@ -1,0 +1,91 @@
+---
+title: "Report Components"
+author: "Elliot, Mengying, Priscilla, Xujin"
+date: 11/11/2021
+output: html_document
+---
+## Introduction 
+Our dataset is from Kaggle, and we used 2018 and 2019's happiness report. This is a published data from Sustainable Development Solution Network. The World Happiness Report is a survey intended to understand people's happiness levels from different countries based on various factors like GDP per capita, social support, healthy life expectation, etc. The researchers asked representatives from different countries to rank their life satisfaction from 0 to 10. Our group chooses this topic because we are curious about what influences people's happiness level; plus, mental health is a popular topic nowadays that people pay more attention to. 
+ 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(repos = c(CRAN = "http://cran.rstudio.com"))
+source("happiness.R")
+library("tidyverse")
+library("knitr") 
+library("ggplot2")
+```
+
+## Summary 
+We summarized how many rows and columns are in each dataset to have a clear understanding of the data. Then, we calculated the average score for 2018 and 2019 datasets using the mean. We also found the lowest and highest regions in both datasets. For everything we did in this section, we all used 2019 datasets because it is the most recent and it is more accurate.  
+
+```{r summary, include = TRUE}
+summary_info <- list()
+summary_info$row_2018 <- nrow(h_2018_df)
+summary_info$row_2019 <- nrow(h_2019_df)
+summary_info$col_2018 <- ncol(h_2018_df)
+summary_info$col_2019 <- ncol(h_2019_df)
+summary_info$mean_2019 <- mean(h_2019_df$Score) 
+summary_info$mean_2018 <- mean(h_2018_df$Score) 
+summary_info$min_2019 <- h_2019_df %>%
+  filter(Score == min(Score))%>%
+  select(Country.or.region)
+summary_info$min_2018 <- h_2018_df %>%
+  filter(Score == min(Score))%>%
+  select(Country.or.region)
+summary_info$max_2019 <- h_2019_df %>%
+  filter(Score == max(Score))%>%
+  select(Country.or.region)
+summary_info$max_2018 <- h_2018_df %>%
+  filter(Score == max(Score))%>%
+  select(Country.or.region)
+
+print(summary_info)
+```
+
+## Pertinent Observations
+In the table, we observe the countries and regions that have high scores and high life expectancy and how these two factors play with the rest of the columns. What similarity and differences we observe in the determination of the high score. For instance, if one country has high scores, how might this impact their ranking in this survey.  
+
+```{r table, include = TRUE}
+h_2019_df <- h_2019_df %>% mutate(across(3:9, round, 1))
+View(h_2019_df)
+h_2018_df <- h_2018_df %>% 
+  filter(Perceptions.of.corruption != "N/A")%>% 
+  mutate(across(where(is.numeric), round, 1))
+View(h_2018_df)
+
+score_table_2019 <- h_2019_df %>%
+  group_by(Country.or.region) %>% 
+  filter(Score >= 7.5) %>%
+  filter(Healthy.life.expectancy >= 1.00) 
+
+kable(score_table_2019, col.names 
+        = c("Rank", "Countries and Regions", 
+            "Score", "GDP", "Life Expectancy", "Support", "Freedom", 
+            "Generosity", "Corruption"), 
+        caption = "Table 1. The result of a high score and high expectancy")
+```
+## The purpose of each chart
+*we used the most recent data from 2019 data set. 
+
+Scatter plot: This scattered plot is used to determine the relationship between the score and their GDP. How do different GDP levels affect one country's score in the survey? With the scattered plot, we can clearly see the distribution. 
+```{r scatter plot, include = TRUE}
+scatter_2019 <- ggplot(h_2019_df, aes(x=GDP.per.capita, y=Score)) + 
+  geom_point(alpha=0.3, size = 0.7)
+print(scatter_2019)
+```
+
+Bar: We used this bar chart to visualize the countries and regions with the highest or lowest score. Using a bar chart helps indicate the differences between the top three countries and the last three countries. The higher the score is, the happier the people are; the lower the score is, people are less happy.      
+```{r bar plot, include = TRUE}
+top_bottom_2019 <- h_2019_df %>% 
+  filter(Overall.rank <= 3 | Overall.rank >= 154)
+bar_2019 <- ggplot(top_bottom_2019, aes(x=Country.or.region, y=Score)) + 
+  geom_bar(stat="identity", width=0.5)
+print(bar_2019)
+```
+
+Box plot: For this box plot, we are analyzing the maximum, the average, and the minimum of people's healthy life expectancy because we want to have a fair understanding of how each value lies as a whole. For instance, we would love to see how the average lies when compared with the maximum and the minimum numbers.
+```{r box plot, include = TRUE}
+boxplot_2019 <- boxplot(h_2019_df$Healthy.life.expectancy, main="Healthy Life Expectancy Plot", ylab="Life Expectancy")
+```
